@@ -14,6 +14,9 @@
         div {
             display: inline-block;
         }
+        .bold {
+            font-weight: bold;
+        }
         .container {
             display: flex;
             justify-content: center;
@@ -142,13 +145,21 @@
             releases.forEach(release => {
                 console.log(`${release.published_at} - ${release.name}`)
                 const releaseElement = document.createElement('p');
-                releaseElement.textContent = `${repo} release:  ${release.published_at} - ${release.name}`;
+                releaseElement.textContent = `${repo} | ${release.published_at} | `;
                 resultsDiv.appendChild(releaseElement);
+                const span = document.createElement('span');
+                span.textContent = release.name;
+                span.className = "bold";
+                releaseElement.appendChild(span);
                 release.assets.forEach(asset => {
-                    console.log(`${asset.created_at} - ${asset.name} - ${asset.download_count} `);
+                    console.log(`${asset.created_at} | ${asset.name} | ${asset.download_count} `);
                     const assetElement = document.createElement('p');
-                    assetElement.textContent = `> Asset: ${asset.created_at} - ${asset.name} - ${asset.download_count} `;
+                    assetElement.textContent = `> ${asset.created_at} | ${asset.name} | `;
                     resultsDiv.appendChild(assetElement);
+                    const assetSpan = document.createElement('span');
+                    assetSpan.textContent = asset.download_count;
+                    assetSpan.className = "bold";
+                    assetElement.appendChild(assetSpan);
                     if (asset.download_count > 0) {
                         assetElement.className = 'highlight';
                     }
@@ -191,8 +202,12 @@
                     repoResult.className = 'highlight';
                     repoCount++;
                 }
-                repoResult.textContent = `${repo.name}: ${downloads}`;
+                repoResult.textContent = `${repo.name}: `;
                 resultsDiv.appendChild(repoResult);
+                const span = document.createElement('span');
+                span.textContent = downloads;
+                span.className = "bold";
+                repoResult.appendChild(span);
                 combinedDownloads += downloads;
                 checkedRepo++;
             }
