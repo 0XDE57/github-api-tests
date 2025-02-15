@@ -55,8 +55,40 @@
     </div>
 
     <script>
+        //let repositories = [];
+        //let releases = [];
+
+        async function getPaginatedData(aurl, token) {
+            let pagedData = [];
+            let page = 1;
+            let url = `${aurl}?per_page=100&page=${page}`;
+            let response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`
+                }
+            });
+            let data = await response.json();
+            while (data.length > 0) {
+                pagedData.push(...data);
+                page++;
+                console.log('fetching page: ' + page);
+                url = `${aurl}?per_page=100&page=${page}`;
+                response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`
+                    }
+                });
+                data = await response.json();
+            }
+            return pagedData;
+        }
+
         async function getUserRepos(username, token) {
+            //return getPaginatedData(`https://api.github.com/users/${username}/repos`, token);
+
             const statusText = document.getElementById('status');
+            statusText.innerText = 'fetching repos...';
+
             const repos = [];
             let page = 1;
             let url = `https://api.github.com/users/${username}/repos?per_page=100&page=${page}`;
@@ -81,22 +113,55 @@
             return repos;
         }
 
-        async function getReleaseDownloads(owner, repo, token) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/releases`;
-            const response = await fetch(url, {
+        async function getReleaseDownloads(username, repo, token) {
+            let releases = [];
+            let page = 1;
+            let url = `https://api.github.com/repos/${username}/${repo}/releases?per_page=100&page=${page}`;
+            let response = await fetch(url, {
                 headers: {
                     'Authorization': `token ${token}`
                 }
             });
-            const releases = await response.json();
+            let data = await response.json();
+            while (data.length > 0) {
+                releases.push(...data);
+                page++;
+                console.log('fetching releases: ' + page);
+                url = `https://api.github.com/repos/${username}/${repo}/releases?per_page=100&page=${page}`;
+                response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${token}`
+                    }
+                });
+                data = await response.json();
+            }
 
+
+            const resultsDiv = document.getElementById('results');
             let totalDownloads = 0;
-
             releases.forEach(release => {
+                console.log(`${release.published_at} - ${release.name}`)
+                const releaseElement = document.createElement('p');
+                releaseElement.textContent = `${repo} release:  ${release.published_at} - ${release.name}`;
+                resultsDiv.appendChild(releaseElement);
                 release.assets.forEach(asset => {
+                    console.log(`${asset.created_at} - ${asset.name} - ${asset.download_count} `);
+                    const assetElement = document.createElement('p');
+                    assetElement.textContent = `> Asset: ${asset.created_at} - ${asset.name} - ${asset.download_count} `;
+                    resultsDiv.appendChild(assetElement);
+                    if (asset.download_count > 0) {
+                        assetElement.className = 'highlight';
+                    }
                     totalDownloads += asset.download_count;
                 });
             });
+
+            //debugger;
+            if (totalDownloads > 0) {
+                //append for analyis
+                //debugger;
+                //repo['releases'] = releases;
+            }
 
             return totalDownloads;
         }
@@ -105,9 +170,10 @@
             const statusText = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
-            statusText.innerText = 'fetching repos...';
 
             let combinedDownloads = 0;
+            let repoCount = 0;
+            let checkedRepo = 0;
 
             const repos = await getUserRepos(username, token);
 
@@ -123,13 +189,15 @@
                 const repoResult = document.createElement('p');
                 if (downloads > 0) {
                     repoResult.className = 'highlight';
+                    repoCount++;
                 }
                 repoResult.textContent = `${repo.name}: ${downloads}`;
                 resultsDiv.appendChild(repoResult);
                 combinedDownloads += downloads;
+                checkedRepo++;
             }
 
-            statusText.innerText = 'Total: ' + combinedDownloads;
+            statusText.innerText = `${combinedDownloads} downloads between ${repoCount} repo's.`;
             const combinedResult = document.createElement('p');
             //careful with innerHTML with web request data -> xss?
             combinedResult.innerHTML = `<strong>Combined downloads for all repositories: ${combinedDownloads}</strong>`;
