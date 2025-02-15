@@ -4,21 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Counts</title>
+    <style>
+        h1,h2 {
+            text-align: center;
+        }
+        p {
+            margin: 0;
+        }
+        div {
+            display: inline-block;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .outline {
+            border-radius: 25px;
+            border: 2px solid #73AD21;
+            padding: 20px;
+        }
+        .highlight {
+            background-color: lightgreen;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Combined Download Counts for Repositories</h1>
-    
-    <form id="repo-form">
-        <label for="username">GitHub Username:</label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="token">GitHub Access Token:</label>
-        <input type="text" id="token" name="token" required>
-        <br>
-        <button type="submit">Get Download Counts</button>
-    </form>
-    
-    <div id="results"></div>
+
+    <h1>Github Download Count</h1>
+    <div class="container">
+        <div class="outline">
+            <form id="repo-form">
+                <label for="username">GitHub Username:</label>
+                <input type="text" id="username" name="username" required>
+                <br>
+                <label for="token">GitHub Access Token:</label>
+                <input type="text" id="token" name="token" required>
+                <br>
+                <button type="submit" id="submit">Get Download Counts</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="outline">
+            <h2 id="status"></h2>
+            <div id="results"></div>
+        </div>
+    </div>
 
     <script>
         async function getUserRepos(username, token) {
@@ -66,31 +100,44 @@
         }
 
         async function main(username, token) {
+            const statusText = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
+            statusText.innerText = 'fetching repos';
 
             let combinedDownloads = 0;
 
             const repos = await getUserRepos(username, token);
 
             for (const repo of repos) {
+                statusText.innerText = `(${combinedDownloads}) ${repo.name}`;
                 //ignore forks, we want only sources (could include if user is contributor to fork)
-                if (repo.fork) continue;
-
+                if (repo.fork) {
+                    console.log('skipping fork: ' + repo.name);
+                    continue;
+                }
+                console.log('checking: ' + repo.name);
                 const downloads = await getReleaseDownloads(username, repo.name, token);
                 const repoResult = document.createElement('p');
-                repoResult.textContent = `Total downloads for ${repo.name}: ${downloads}`;
+                if (downloads > 0) {
+                    repoResult.className = 'highlight';
+                }
+                repoResult.textContent = `${repo.name}: ${downloads}`;
                 resultsDiv.appendChild(repoResult);
                 combinedDownloads += downloads;
             }
 
+            statusText.innerText = 'Total: ' + combinedDownloads;
             const combinedResult = document.createElement('p');
+            //careful with innerHTML with web request data -> xss?
             combinedResult.innerHTML = `<strong>Combined downloads for all repositories: ${combinedDownloads}</strong>`;
             resultsDiv.appendChild(combinedResult);
+            document.querySelector('#submit').removeAttribute("disabled");
         }
 
         document.getElementById('repo-form').addEventListener('submit', function(event) {
             event.preventDefault();
+            document.querySelector('#submit').setAttribute("disabled", true);
             const username = document.getElementById('username').value;
             const token = document.getElementById('token').value;
             main(username, token);
@@ -98,4 +145,3 @@
     </script>
 </body>
 </html>
-``` ▋
