@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+</head>
+
+<body>
+
+  <div class="container" style="text-align: center; border-style: solid; border-width: 1px; padding: 4px;">
+    <form id="repo-form">
+      <label for="username">GitHub Username:</label>
+      <input type="text" id="username" name="username">
+      <button type="submit" id="submit">Load stats</button>
+    </form>
+  </div>
+
+  <main>
+    <img id="readmestats" src="" style="max-width: 100%;">
+    <img id="toplangs" src="" style="max-width: 100%;">
+  </main>
+
+</body>
+
+<script>
+  document.getElementById('repo-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    
+    const statsURL = `https://github-readme-stats-one-bice.vercel.app/api?username=${username}&show_icons=true&include_all_commits=true`;
+    document.getElementById('readmestats').src = statsURL;
+
+    const toplangs = `https://github-readme-stats.vercel.app/api/top-langs/?username=${username}&layout=compact`;
+    document.getElementById('toplangs').src = toplangs;
+  });
+</script>
+
+</html>

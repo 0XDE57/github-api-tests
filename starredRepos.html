@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Starred Repos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    input {
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 5px 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>GitHub Starred Repositories</h1>
+  <form id="userForm">
+    <label for="username">GitHub Username:</label>
+    <input type="text" id="username" name="username" required>
+    <button type="submit">Get Starred Repos</button>
+  </form>
+  <h2>Starred Repositories:</h2>
+  <ul id="repoList"></ul>
+
+  <script>
+    async function getPaginatedData(aurl, token) {
+      let pagedData = [];
+      let page = 1;
+      let url = `${aurl}?per_page=100&page=${page}`;
+      let response = await fetch(url, {
+        headers: {
+          //'Authorization': `token ${token}`
+        }
+      });
+      let data = await response.json();
+      while (data.length > 0) {
+        pagedData.push(...data);
+        page++;
+        console.log('fetching page: ' + page);
+        url = `${aurl}?per_page=100&page=${page}`;
+        response = await fetch(url, {
+          headers: {
+            //'Authorization': `token ${token}`
+          }
+        });
+        data = await response.json();
+      }
+      return pagedData;
+    }
+
+    async function getUserStars(username) {
+      return await getPaginatedData(`https://api.github.com/users/${username}/starred`);
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const repoList = document.getElementById('repoList');
+      repoList.innerHTML = '';
+
+      const starredRepos = await getUserStars(username);
+
+      starredRepos.forEach(repo => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${repo.full_name}: ${repo.description}`;
+        repoList.appendChild(listItem);
+      });
+
+    });
+  </script>
+</body>
+
+</html>

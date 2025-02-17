@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,32 +9,41 @@
         body {
             background-color: #607D8B;
         }
-        h1,h2 {
+
+        h1,
+        h2 {
             text-align: center;
         }
+
         p {
             margin: 0;
         }
+
         div {
             display: inline-block;
         }
+
         .bold {
             font-weight: bold;
         }
+
         .container {
             display: flex;
             justify-content: center;
             padding: 20px;
         }
+
         .outline {
             border-radius: 25px;
             border: 2px solid #73AD21;
             padding: 20px;
             background-color: #3a79b7;
         }
+
         .highlight {
             background-color: lightgreen;
         }
+
         form#repo-form {
             display: flex;
             flex-direction: column;
@@ -151,7 +161,7 @@
             const resultsDiv = document.getElementById('results');
             let totalDownloads = 0;
             releases.forEach(release => {
-                console.log(`${release.published_at} - ${release.name}`)
+                //console.log(`${release.published_at} - ${release.name}`)
                 const releaseElement = document.createElement('p');
                 releaseElement.textContent = `${repo} | ${(new Date(release.published_at)).toLocaleString()} | `;
                 resultsDiv.appendChild(releaseElement);
@@ -160,7 +170,7 @@
                 span.className = "bold";
                 releaseElement.appendChild(span);
                 release.assets.forEach(asset => {
-                    console.log(`${asset.created_at} | ${asset.name} | ${asset.download_count} `);
+                    //console.log(`${asset.created_at} | ${asset.name} | ${asset.download_count} `);
                     const assetElement = document.createElement('p');
                     assetElement.textContent = `> ${(new Date(asset.created_at)).toLocaleString()} | ${asset.name} | `;
                     resultsDiv.appendChild(assetElement);
@@ -174,13 +184,6 @@
                     totalDownloads += asset.download_count;
                 });
             });
-
-            //debugger;
-            if (totalDownloads > 0) {
-                //append for analyis
-                //debugger;
-                //repo['releases'] = releases;
-            }
 
             return totalDownloads;
         }
@@ -228,7 +231,7 @@
             document.querySelector('#submit').removeAttribute("disabled");
         }
 
-        document.getElementById('repo-form').addEventListener('submit', function(event) {
+        document.getElementById('repo-form').addEventListener('submit', function (event) {
             event.preventDefault();
             document.querySelector('#submit').setAttribute("disabled", true);
             const username = document.getElementById('username').value;
@@ -237,4 +240,5 @@
         });
     </script>
 </body>
+
 </html>
