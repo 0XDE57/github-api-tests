@@ -39,6 +39,11 @@
     th.sorted-desc::after {
       content: " ▼";
     }
+
+    table tr:hover td {
+      background: skyblue;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -47,12 +52,49 @@
   <form id="userForm">
     <label for="username">GitHub Username:</label>
     <input type="text" id="username" name="username" required>
-    <button type="submit">Get Starred Repos</button>
+    <button type="submit" id="submit">Get Starred Repos</button>
   </form>
   <h2>Starred Repositories:</h2>
-  <ul id="repoList"></ul>
+  <div id="repoList"></div>
 
   <script>
+
+    async function getPaginatedData2(aurl, token) {
+      let pagedData = [];
+      let url = `${aurl}?per_page=100`;
+
+      while (url) {
+        console.log('fetching: ' + url);
+        let response = await fetch(url, {
+          headers: {
+            //'Authorization': `token ${token}`
+          }
+        });
+        let data = await response.json();
+        pagedData.push(...data);
+
+        // Get the 'Link' header from the response
+        let linkHeader = response.headers.get('Link');
+        if (linkHeader) {
+          // Parse the 'Link' header
+          let links = linkHeader.split(',').reduce((acc, link) => {
+            let [urlPart, relPart] = link.split(';');
+            let url = urlPart.trim().slice(1, -1);
+            let rel = relPart.trim().split('=')[1].replace(/"/g, '');
+            acc[rel] = url;
+            return acc;
+          }, {});
+
+          // Get the 'next' link
+          url = links.next || null;
+        } else {
+          url = null;
+        }
+      }
+
+      return pagedData;
+    }
+
     async function getPaginatedData(aurl, token) {
       let pagedData = [];
       let page = 1;
@@ -79,13 +121,17 @@
     }
 
     async function getUserStars(username, token) {
-      return await getPaginatedData(`https://api.github.com/users/${username}/starred`, token);
+      return await getPaginatedData2(`https://api.github.com/users/${username}/starred`, token);
+    }
+
+    async function getUserSubscriptions(username, token) {
+      return await getPaginatedData(`https://api.github.com/users/${username}/subscriptions`, token);
     }
 
     function buildTable(repos) {
       const table = document.createElement('table');
       const headerRow = document.createElement('tr');
-      const headers = ['Repository', 'Stars', 'Description'];
+      const headers = ['User', 'Repository', 'Stars', 'Forks', 'Description'];
 
       headers.forEach((headerText, index) => {
         const header = document.createElement('th');
@@ -99,13 +145,22 @@
       repos.forEach(repo => {
         const row = document.createElement('tr');
 
+        const fullnameCell = document.createElement('td');
+        fullnameCell.textContent = repo.full_name.split('/')[0];
+        fullnameCell.style.setProperty('text-align', 'right');
+        row.appendChild(fullnameCell);
+
         const nameCell = document.createElement('td');
-        nameCell.textContent = repo.full_name;
+        nameCell.textContent = repo.name;
         row.appendChild(nameCell);
 
         const starsCell = document.createElement('td');
         starsCell.textContent = repo.stargazers_count;
         row.appendChild(starsCell);
+
+        const forksCell = document.createElement('td');
+        forksCell.textContent = repo.forks_count;
+        row.appendChild(forksCell);
 
         const descriptionCell = document.createElement('td');
         descriptionCell.textContent = repo.description;
@@ -152,6 +207,7 @@
 
     document.getElementById('userForm').addEventListener('submit', async function (event) {
       event.preventDefault();
+      document.querySelector('#submit').setAttribute("disabled", true);
       const username = document.getElementById('username').value;
       const repoList = document.getElementById('repoList');
       repoList.innerHTML = '';
@@ -161,15 +217,10 @@
       const table = buildTable(starredRepos);
       repoList.appendChild(table);
 
-      /*
-      starredRepos.forEach(repo => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `${repo.full_name} | ${repo.stargazers_count} | ${repo.description}`;
-        repoList.appendChild(listItem);
-      });*/
-
+      document.querySelector('#submit').removeAttribute("disabled");
     });
   </script>
+
 </body>
 
 </html>
